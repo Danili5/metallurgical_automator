@@ -1,4 +1,10 @@
+<<<<<<< HEAD
+inputs/
+outputs/
+venv/
+=======
 forms/
 results/
 venv/
 .env
+>>>>>>> 16925acf03fa60a617ec21ce9ffbff48dcac01db

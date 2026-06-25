@@ -10,50 +10,38 @@ from dotenv import load_dotenv
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-load_dotenv()
-
-# requires a .env
-DATA = os.getenv("DATA")
-REPORTS = os.getenv("REPORTS")
+logging.basicConfig(
+    level=logging.INFO,
+    format="[Time] %(asctime)s\n[Message] %(message)s\n",
+    datefmt="%H:%M:%S"
+)
 
 class Main(FileSystemEventHandler):
     def on_created(self, event):    
-        """set up"""
+        logging.info(f"The following was created:\n> {event.src_path}")
 
-        # writes into the template file from the data file
-        # for row in template_form.tables[1].rows:
-        #         for cell in row.cells:
-        #             for paragraph in cell.paragraphs:        
-        #                 for key, value in data.items():
-        #                     if key in paragraph.text:
-        #                         try:
-        #                             value = f"{int(value):,}"
-        #                         except Exception:
-        #                             print(Exception)
+        for report in Path(REPORTS_DIRECTORY).rglob("*.docx"):
+            if Path(report).stem.lower().replace(" ", "") == Path(event.src_path).stem.lower().replace(" ", ""):
+                print(Path(report).name, flush = True)
 
-        #                         new_text = paragraph.text.replace(key, value)
-        #                         paragraph.text = ""
-        #                         paragraph.text = new_text
+if __name__ == "__main__":    
+    load_dotenv()
 
-        #                         for run in paragraph.runs:
-        #                             run.font.name = "Bookman Old Style"
-        #                             run.font.size = Pt(10)
+    DATA_DIRECTORY = os.getenv("DATA_DIRECTORY")
+    REPORTS_DIRECTORY = os.getenv("REPORTS_DIRECTORY")
 
-        #                 if "+" in paragraph.text:
-        #                     paragraph.text = ""
+    if not DATA_DIRECTORY or not REPORTS_DIRECTORY:
+        logging.error("A directory is missing in .env")
+        sys.exit(1)
+    
+    logging.info(f"Started observation on the following directories:\n> {DATA_DIRECTORY}\n> {REPORTS_DIRECTORY}")
 
-        #     template_form.save(str(Path(REPORT_PATH) / report_title))
-
-if __name__ == "__main__":
     observer = Observer()
 
-    observer.schedule(Main(), DATA)
+    observer.schedule(Main(), DATA_DIRECTORY, recursive = True)
     observer.start()
 
     try:
-        if observer.is_alive():
-            print("started", flush = True)
-
         while observer.is_alive():
             observer.join(1)
     finally:
