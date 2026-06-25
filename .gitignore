@@ -1,4 +1,4 @@
-reports/
-data/
+forms/
+results/
 venv/
 .env
