@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import logging
 import pandas as pd
 from pathlib import Path
 from docx import Document
@@ -12,77 +13,50 @@ from watchdog.events import FileSystemEventHandler
 load_dotenv()
 
 DATA = os.getenv("DATA")
-FORMS = os.getenv("FORMS")
+REPORTS = os.getenv("REPORTS")
 
 class Main(FileSystemEventHandler):
     def on_created(self, event):    
-        if event.is_directory:
-            return
-        
-        file = Path(event.src_path)
+        """set up"""
+        # setup data file
+        # setup template file
 
-        if file.name.startswith("~$") or file.suffix not in [".csv", ".is_tens"]:
-            return
+        # writes into the template file from the data file
+        # for row in template_form.tables[1].rows:
+        #         for cell in row.cells:
+        #             for paragraph in cell.paragraphs:        
+        #                 for key, value in data.items():
+        #                     if key in paragraph.text:
+        #                         try:
+        #                             value = f"{int(value):,}"
+        #                         except Exception:
+        #                             print(Exception)
 
-        time.sleep(0.5)
+        #                         new_text = paragraph.text.replace(key, value)
+        #                         paragraph.text = ""
+        #                         paragraph.text = new_text
 
-        file_number = file.stem
+        #                         for run in paragraph.runs:
+        #                             run.font.name = "Bookman Old Style"
+        #                             run.font.size = Pt(10)
 
-        test_results_file = None
-        test_meta_file = None
+        #                 if "+" in paragraph.text:
+        #                     paragraph.text = ""
 
-        if file.suffix == ".csv":
-            test_results_file = file
-            test_meta_file = file.with_suffix(".is_tens")
-        else:
-            test_meta_file = file
-            test_results_file = file.with_suffix(".csv")
+        #     template_form.save(str(Path(REPORT_PATH) / report_title))
 
-        if not test_results_file.exists() or not test_meta_file.exists():
-            return
+if __name__ == "__main__":
+    observer = Observer()
 
-        if file.suffix != ".csv":
-            return
+    observer.schedule(Main(), DATA)
+    observer.start()
 
-        try:
-            for row in template_form.tables[1].rows:
-                for cell in row.cells:
-                    for paragraph in cell.paragraphs:        
-                        for key, value in data.items():
-                            if key in paragraph.text:
-                                try:
-                                    value = f"{int(value):,}"
-                                except Exception:
-                                    print(Exception)
+    try:
+        if observer.is_alive():
+            print("started", flush = True)
 
-                                new_text = paragraph.text.replace(key, value)
-                                paragraph.text = ""
-                                paragraph.text = new_text
-
-                                for run in paragraph.runs:
-                                    run.font.name = "Bookman Old Style"
-                                    run.font.size = Pt(10)
-
-                        if "+" in paragraph.text:
-                            paragraph.text = ""
-
-            template_form.save(str(Path(REPORT_PATH) / report_title))
-        except PermissionError:
-            print("Permission Error retrying again", flush = True)
-        except Exception:
-            pritn("Processing Error", flush = True)
-
-observer = Observer()
-
-observer.schedule(Main(), DATA)
-observer.start()
-
-try:
-    if observer.is_alive():
-        print("started", flush = True)
-
-    while observer.is_alive():
-        observer.join(1)
-finally:
-    observer.stop()
-    observer.join()
+        while observer.is_alive():
+            observer.join(1)
+    finally:
+        observer.stop()
+        observer.join()
