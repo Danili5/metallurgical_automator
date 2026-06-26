@@ -52,7 +52,7 @@ class Main(FileSystemEventHandler):
 
                     template.save(report)
                 except PermissionError:
-                    logging.info("permission error continuing the program")
+                    logging.info("permission error, still running the program observation")
 
 if __name__ == "__main__":    
     load_dotenv()
