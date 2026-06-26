@@ -20,35 +20,39 @@ class Main(FileSystemEventHandler):
     def on_created(self, event): 
         time.sleep(0.5)
         logging.info(f"The following was created:\n> {event.src_path}")
-
+        
         for report in Path(REPORTS_DIRECTORY).rglob("*.docx"):
             if Path(report).stem.lower().replace(" ", "") == Path(event.src_path).stem.lower().replace(" ", ""):
-                template = Document(report)
+                try:
+                    template = Document(report)
 
-                data = {f"+{key} {sub_key}+": sub_value for key, value in pd.read_csv(Path(event.src_path), skiprows = [0,2], index_col = 0).to_dict().items() for sub_key, sub_value in value.items()}
+                    data = {f"+{key} {sub_key}+": sub_value for key, value in pd.read_csv(Path(event.src_path), skiprows = [0,2], index_col = 0).to_dict().items() for sub_key, sub_value in value.items()}
 
-                for row in template.tables[1].rows:
-                    for cell in row.cells:
-                        for paragraph in cell.paragraphs:        
-                            for key, value in data.items():
-                                if key in paragraph.text:
-                                    try:
-                                        value = f"{int(value):,}"
-                                    except Exception:
-                                        print(Exception)
+                    for row in template.tables[1].rows:
+                        for cell in row.cells:
+                            for paragraph in cell.paragraphs:        
+                                for key, value in data.items():
+                                    if key in paragraph.text:
+                                        try:
+                                            if "." not in value:
+                                                value = f"{int(value):,}"
+                                        except Exception:
+                                            print(Exception)
 
-                                    new_text = paragraph.text.replace(key, value)
+                                        new_text = paragraph.text.replace(key, str(value))
+                                        paragraph.text = ""
+                                        paragraph.text = new_text
+
+                                        for run in paragraph.runs:
+                                            run.font.name = "Bookman Old Style"
+                                            run.font.size = Pt(10)
+
+                                if "+" in paragraph.text:
                                     paragraph.text = ""
-                                    paragraph.text = new_text
 
-                                    for run in paragraph.runs:
-                                        run.font.name = "Bookman Old Style"
-                                        run.font.size = Pt(10)
-
-                            if "+" in paragraph.text:
-                                paragraph.text = ""
-
-                template.save(report)
+                    template.save(report)
+                except PermissionError:
+                    logging.info("permission error")
 
 if __name__ == "__main__":    
     load_dotenv()
